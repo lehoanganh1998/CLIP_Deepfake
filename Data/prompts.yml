@@ -1,0 +1,9 @@
+FaceForensic++:
+  classes: [
+    'fake',
+    'real'
+  ]
+
+  templates: [
+    'this is a {} images'
+  ]
