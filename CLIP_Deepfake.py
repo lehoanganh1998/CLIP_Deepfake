@@ -6,7 +6,8 @@ from tqdm import tqdm
 from PIL import Image
 import pandas as pd
 from torchvision.io import read_image
-
+import torchvision.transforms as transforms
+import matplotlib as plt
 #! DEVICE DEFINE
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -31,7 +32,6 @@ def zeroshot_classifier(classnames, templates):
         for classname in classnames:
             texts = [template.format(classname) for template in templates] #format with class
             texts = clip.tokenize(texts).cuda() #tokenize
-            
             class_embeddings = model.encode_text(texts) #embed with text encoder
             class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
             class_embedding = class_embeddings.mean(dim=0)
@@ -59,7 +59,8 @@ class CustomImageDataset():
 
     def __getitem__(self, idx):
         img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
-        image = read_image(img_path)
+        # image = read_image(img_path)
+        image = Image.open(img_path)
         label = self.img_labels.iloc[idx, 1]
         if self.transform:
             image = self.transform(image)
@@ -76,28 +77,30 @@ with open("Data/models.yml", 'r') as stream:
     models = yaml.safe_load(stream)
 
 # load model and image preprocessing
-model, transform = clip.load("ViT-B/32", device=device, jit=False)
-images = CustomImageDataset(annotations_file="label.csv",img_dir="Dataset/Test/deepfake", transform=transform)
+model,transform= clip.load("ViT-B/32", device=device, jit=False)
 
-loader = torch.utils.data.DataLoader(images, batch_size=32, num_workers=2)
+images = CustomImageDataset(annotations_file="labels_real.csv",img_dir="Dataset/deepfake/0/", transform=transform)
+
+loader = torch.utils.data.DataLoader(images, batch_size=20, num_workers=2)
 zeroshot_weights = zeroshot_classifier(model_prompt["FaceForensic++"]["classes"], model_prompt["FaceForensic++"]["templates"])
 
-# with torch.no_grad():
-#     top1, top5, n = 0., 0., 0.
-#     for i, (images, target) in enumerate(loader):
-#         images = images.cuda()
-#         target = target.cuda()
-        
-#         # predict
-#         image_features = model.encode_image(images)
-#         image_features /= image_features.norm(dim=-1, keepdim=True)
-#         logits = 100. * image_features @ zeroshot_weights
+with torch.no_grad():
+    top1, top5, n = 0., 0., 0. 
+    for i, (images, target) in enumerate(loader):
+   
+        images = images.cuda()
+        target = target.cuda()
+        # predict
+        image_features = model.encode_image(images)
+        image_features /= image_features.norm(dim=-1, keepdim=True)
+        logits = 100. * image_features @ zeroshot_weights
 
-#         # measure accuracy
-#         acc1, acc5 = accuracy(logits, target, topk=(1, 5))
-#         top1 += acc1
-#         top5 += acc5
-#         n += images.size(0)
+        # measure accuracy
+        acc1, acc5 = accuracy(logits, target, topk=(1, 1))
+        top1 += acc1
+        top5 += acc5
+        n += images.size(0)
 
-# top1 = (top1 / n) * 100
-# result = str(round(top1,2))
+top1 = (top1 / n) * 100
+result = str(round(top1,2))
+print(result)

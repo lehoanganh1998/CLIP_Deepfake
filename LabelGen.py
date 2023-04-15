@@ -14,7 +14,7 @@ def list_files(folder_path):
             result_list.append(label)
             result.append(result_list)
     return result
-images_dict = list_files("Dataset/Test/deepfake")
-with open('Dataset/Test/deepfake/label.csv', 'w', encoding='UTF8', newline='') as f:
+images_dict = list_files("Dataset/deepfake/0")
+with open('Dataset/deepfake/0/labels_real.csv', 'w', encoding='UTF8', newline='') as f:
     writer = csv.writer(f)
     writer.writerows(images_dict)
