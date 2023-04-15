@@ -82,22 +82,22 @@ images = CustomImageDataset(annotations_file="label.csv",img_dir="Dataset/Test/d
 loader = torch.utils.data.DataLoader(images, batch_size=32, num_workers=2)
 zeroshot_weights = zeroshot_classifier(model_prompt["FaceForensic++"]["classes"], model_prompt["FaceForensic++"]["templates"])
 
-with torch.no_grad():
-    top1, top5, n = 0., 0., 0.
-    for i, (images, target) in enumerate(loader):
-        images = images.cuda()
-        target = target.cuda()
+# with torch.no_grad():
+#     top1, top5, n = 0., 0., 0.
+#     for i, (images, target) in enumerate(loader):
+#         images = images.cuda()
+#         target = target.cuda()
         
-        # predict
-        image_features = model.encode_image(images)
-        image_features /= image_features.norm(dim=-1, keepdim=True)
-        logits = 100. * image_features @ zeroshot_weights
+#         # predict
+#         image_features = model.encode_image(images)
+#         image_features /= image_features.norm(dim=-1, keepdim=True)
+#         logits = 100. * image_features @ zeroshot_weights
 
-        # measure accuracy
-        acc1, acc5 = accuracy(logits, target, topk=(1, 5))
-        top1 += acc1
-        top5 += acc5
-        n += images.size(0)
+#         # measure accuracy
+#         acc1, acc5 = accuracy(logits, target, topk=(1, 5))
+#         top1 += acc1
+#         top5 += acc5
+#         n += images.size(0)
 
-top1 = (top1 / n) * 100
-result = str(round(top1,2))
+# top1 = (top1 / n) * 100
+# result = str(round(top1,2))
